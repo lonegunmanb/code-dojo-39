@@ -2,6 +2,21 @@ package main
 
 import "fmt"
 
+type singer struct {
+	name   string
+	writer func(song string)
+}
+
+func NewSinger(name string) *singer {
+	return &singer{name: name}
+}
+
+func (a *singer) Sing() {
+	song := `There was an old lady who swallowed a fly.
+I don't know why she swallowed a fly - perhaps she'll die!`
+	a.writer(song)
+}
+
 func main() {
 	song := `
 There was an old lady who swallowed a fly.
