@@ -8,6 +8,7 @@ import (
 var chorus = []*singer{
 	NewSinger("fly", ""),
 	NewSinger("spider", "That wriggled and wiggled and tickled inside her."),
+	NewSinger("bird", "How absurd to swallow a bird."),
 }
 
 func formUp(){
@@ -67,7 +68,12 @@ func (s *singer) preludeSing() {
 
 func (s *singer) chorusSing() {
 	if s.sibling != nil {
-		s.writer(fmt.Sprintf("She swallowed the %s to catch the %s;", s.name, s.sibling.name))
+		s.writer(fmt.Sprintf("She swallowed the %s to catch the %s", s.name, s.sibling.name))
+		delimiter := ","
+		if s.sibling.sibling == nil {
+			delimiter = ";"
+		}
+		s.writer(delimiter)
 		s.writer("\n")
 		s.sibling.chorusSing()
 	}
