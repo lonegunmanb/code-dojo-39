@@ -5,46 +5,87 @@ import (
 	"strings"
 )
 
-var chorus = []*singer{
-	NewSinger("fly", ""),
-	NewSinger("spider", "That wriggled and wiggled and tickled inside her."),
-	NewSinger("bird", "How absurd to swallow a bird."),
+type singer struct {
+	name             string
+	overtureTemplate string
+	writer           func(song string)
+	sibling          *singer
+	deadly           bool
 }
 
-func formUp(){
-	for i, s := range chorus {
+type chorus struct {
+	singers []*singer
+}
+
+func newChorus() *chorus{
+	var singers = []*singer{
+		newSinger("fly", ""),
+		newSinger("spider", "That wriggled and wiggled and tickled inside her."),
+		newSinger("bird", "How absurd to swallow a %s."),
+		newSinger("cat", "Fancy that to swallow a %s!"),
+		newSinger("dog", "What a hog, to swallow a %s!"),
+		newSinger("cow", "I don't know how she swallowed a %s!"),
+		newSinger("horse", ""),
+	}
+	c := &chorus{singers}
+	c.FormUp()
+	return c
+}
+
+func (c *chorus) FormUp() {
+	for i, s := range c.singers {
 		if i > 0 {
-			s.sibling = chorus[i-1]
+			s.sibling = c.singers[i-1]
+		}
+		if i == len(c.singers)-1 {
+			c.singers[i].deadly = true
 		}
 	}
 }
 
-type singer struct {
-	name   string
-	overtureTemplate string
-	writer func(song string)
-	sibling *singer
+func (c *chorus) Sing() string{
+	sb, writer := buildWriter()
+	writer("\n")
+	c.singers[len(c.singers)-1].Sing(writer)
+	writer("\n	")
+	return sb.String()
 }
 
-func NewSinger(name string, overtureTemplate string) *singer {
-	return &singer{name: name, overtureTemplate:overtureTemplate}
+func newSinger(name string, overtureTemplate string) *singer {
+	return &singer{name: name, overtureTemplate: overtureTemplate}
 }
 
 func (s *singer) Sing(writer func(sing string)) {
 	s.writer = writer
-	if s.sibling != nil{
+	s.siblingSing(writer)
+	s.selfIntroduceSing()
+	if !s.finalSing() {
+		s.preludeSing()
+		s.chorusSing()
+		s.postludeSing()
+	}
+}
+
+func (s *singer) siblingSing(writer func(sing string)) {
+	if s.sibling != nil {
 		s.sibling.Sing(writer)
 		s.writer("\n")
 	}
+}
 
-	s.selfIntroduceSing()
-	s.preludeSing()
-	s.chorusSing()
-	s.postludeSing()
+func (s *singer) finalSing() bool {
+	if s.deadly {
+		s.writer("...She's dead, of course!")
+	}
+	return s.deadly
 }
 
 func (s *singer) selfIntroduceSing() {
 	s.writer(fmt.Sprintf("There was an old lady who swallowed a %s", s.name))
+	if s.deadly {
+		s.writer("...\n")
+		return
+	}
 	delimiter := ";"
 	if s.sibling == nil {
 		delimiter = "."
@@ -80,6 +121,14 @@ func (s *singer) chorusSing() {
 }
 func (s *singer) postludeSing() {
 	s.writer("I don't know why she swallowed a fly - perhaps she'll die!")
+}
+
+func buildWriter() (*strings.Builder, func(sing string)) {
+	stringBuilder := &strings.Builder{}
+	writer := func(sing string) {
+		stringBuilder.WriteString(sing)
+	}
+	return stringBuilder, writer
 }
 
 func main() {
